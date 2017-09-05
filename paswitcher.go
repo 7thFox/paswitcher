@@ -50,7 +50,7 @@ func getSinkInputs() (ret []int, err error) {
 }
 
 func getNextSink() (output, error) {
-	outputs, err := getOutputs()
+	outputs, err := getAvailableOutputs()
 	if err != nil {
 		return output{}, err
 	}
@@ -113,6 +113,5 @@ func getOutputs() ([]output, error) {
 			})
 		}
 	}
-	fmt.Println(ret)
 	return ret, nil
 }
