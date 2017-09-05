@@ -7,14 +7,6 @@ import (
 	"strconv"
 )
 
-type output struct {
-	index     int
-	name      string
-	port      string
-	available bool
-	selected  bool
-}
-
 func main() {
 	exec.Command("sh", "-c", `amixer -c1 sset "Auto-Mute Mode" Disabled`) //Needed to allow headphones and line-in to both be available
 	sink, _ := getNextSink()
@@ -28,6 +20,16 @@ func main() {
 	exec.Command("sh", "-c", cmd).Output()
 }
 
+// The output type represents a sink/port combination
+type output struct {
+	index     int
+	name      string
+	port      string
+	available bool
+	selected  bool
+}
+
+// getSinkInputs returns a slice of input indexes
 func getSinkInputs() (ret []int, err error) {
 	o, err := exec.Command("sh", "-c", "pacmd list-sink-inputs").Output()
 	if err != nil {
@@ -49,6 +51,7 @@ func getSinkInputs() (ret []int, err error) {
 	return
 }
 
+// getNextSink returns an output based on the current and available ports
 func getNextSink() (output, error) {
 	outputs, err := getAvailableOutputs()
 	if err != nil {
@@ -66,6 +69,7 @@ func getNextSink() (output, error) {
 	return outputs[0], nil
 }
 
+// listSinks returns the output of "pacmd list-sinks" as a string
 func listSinks() (string, error) {
 	o, err := exec.Command("sh", "-c", "pacmd list-sinks").Output()
 	if err != nil {
@@ -76,6 +80,7 @@ func listSinks() (string, error) {
 	return so, nil
 }
 
+// getAvailableOutputs returns a slice of outputs, which have available = true
 func getAvailableOutputs() ([]output, error) {
 	var ret []output
 	o, err := getOutputs()
@@ -90,6 +95,7 @@ func getAvailableOutputs() ([]output, error) {
 	return ret, nil
 }
 
+// getOutputs returns a slice of outputs of all the sinks and ports
 func getOutputs() ([]output, error) {
 	var ret []output
 	re := regexp.MustCompile(`(?:  (\*| ) index: (\d+)[\S\s]+?name: <(.+)>[\S\s]+?ports:([\S\s]+?)active port: <(.+)>)+`)
