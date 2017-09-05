@@ -16,8 +16,10 @@ type output struct {
 }
 
 func main() {
+	exec.Command("sh", "-c", `amixer -c1 sset "Auto-Mute Mode" Disabled`) //Needed to allow headphones and line-in to both be available
 	sink, _ := getNextSink()
 	inputs, _ := getSinkInputs()
+
 	cmd := fmt.Sprintf("pactl set-sink-port %d %s", sink.index, sink.port)
 	cmd = cmd + " & " + fmt.Sprintf("pacmd set-default-sink %d", sink.index)
 	for _, i := range inputs {
@@ -48,7 +50,7 @@ func getSinkInputs() (ret []int, err error) {
 }
 
 func getNextSink() (output, error) {
-	outputs, err := getAvailableOutputs()
+	outputs, err := getOutputs()
 	if err != nil {
 		return output{}, err
 	}
@@ -111,5 +113,6 @@ func getOutputs() ([]output, error) {
 			})
 		}
 	}
+	fmt.Println(ret)
 	return ret, nil
 }
