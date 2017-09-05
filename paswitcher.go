@@ -17,16 +17,22 @@ func main() {
 	for _, i := range inputs {
 		cmd = cmd + " & " + fmt.Sprintf("pacmd move-sink-input %d %d", i, sink.index)
 	}
+
+	cmd = cmd + " & " + fmt.Sprintf(`notify-send -a "paswitcher" -i "audio-volume-high" "Output Changed" "%s - %s"`, sink.readableSinkName, sink.readablePortName)
+
 	exec.Command("sh", "-c", cmd).Output()
+
 }
 
 // The output type represents a sink/port combination
 type output struct {
-	index     int
-	name      string
-	port      string
-	available bool
-	selected  bool
+	index            int
+	name             string
+	port             string
+	available        bool
+	selected         bool
+	readableSinkName string
+	readablePortName string
 }
 
 // getSinkInputs returns a slice of input indexes
@@ -98,13 +104,13 @@ func getAvailableOutputs() ([]output, error) {
 // getOutputs returns a slice of outputs of all the sinks and ports
 func getOutputs() ([]output, error) {
 	var ret []output
-	re := regexp.MustCompile(`(?:  (\*| ) index: (\d+)[\S\s]+?name: <(.+)>[\S\s]+?ports:([\S\s]+?)active port: <(.+)>)+`)
-	rePorts := regexp.MustCompile(`(\S+): .+ \(priority \d+, latency offset \d+ usec, available: (\S+)\)`)
+	re := regexp.MustCompile(`(?:  (\*| ) index: (\d+)[\S\s]+?name: <(.+)>[\S\s]+?alsa\.card_name = "(.+)"[\S\s]+?ports:([\S\s]+?)active port: <(.+)>)+`)
+	rePorts := regexp.MustCompile(`(\S+): (.+) \(priority \d+, latency offset \d+ usec, available: (\S+)\)`)
 	s, _ := listSinks()
 	res := re.FindAllStringSubmatch(s, -1)
 
 	for _, f := range res {
-		ports := rePorts.FindAllStringSubmatch(f[4], -1)
+		ports := rePorts.FindAllStringSubmatch(f[5], -1)
 		for _, t := range ports {
 			index, err := strconv.Atoi(f[2])
 			if err != nil {
@@ -114,8 +120,10 @@ func getOutputs() ([]output, error) {
 				index,
 				f[3],
 				t[1],
-				t[2] != "no",
-				t[1] == f[5] && f[1] == "*",
+				t[3] != "no",
+				t[1] == f[6] && f[1] == "*",
+				f[4],
+				t[2],
 			})
 		}
 	}
